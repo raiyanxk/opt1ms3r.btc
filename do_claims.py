@@ -12,7 +12,6 @@ API_BASE="https://api.real.vg"
 API_URL = f"{API_BASE}/cardhistoricalearnings"
 DATE = date.today().isoformat()
 CLAIMS_DIR = Path("claims")
-MAX_CLAIMS_PER_SPORT = 2
 
 load_dotenv()
 
@@ -96,7 +95,7 @@ def claim_account(account_name: str, auth_info: str) -> None:
             continue
         
         claims_remaining = sport_entry.get("claimsRemaining", 0)
-        num_claimable = min(len(claimable_cards), MAX_CLAIMS_PER_SPORT, claims_remaining)
+        num_claimable = min(len(claimable_cards), claims_remaining)
 
         cards_to_claim = claimable_cards[:num_claimable]
         print(f"[{account_name}] {sport_name}: claiming {num_claimable} cards")
