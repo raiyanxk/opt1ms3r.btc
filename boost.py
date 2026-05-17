@@ -94,18 +94,18 @@ def boost_player(player: dict[str, object], auth_info: str) -> tuple[bool, str]:
 
   response = requests.put(url, headers=headers, data=json.dumps({"statBoostKey": str(boost_key)}))
 
-  if response.status_code == 200:
-    return True, f"boosted {player_label} userPassId={player_id} {MAPPINGS[boost_key]}"
-
   try:
-    error_message = response.json().get("message", response.text)
-  except (json.JSONDecodeError, ValueError):
-    error_message = response.text
+    response_data = response.json()
 
-  return False, (
-    f"failed {player_label} userPassId={player_id} statBoostKey={boost_key} "
-    f"status={response.status_code} error={error_message}"
-  )
+    if response_data["success"]:
+      return True, f"boosted {player_label} userPassId={player_id} boost={MAPPINGS[boost_key]}"
+    else:
+      error_message = response_data.get("message", "unknown error")
+      return False, f"failed to boost {player_label} userPassId={player_id} boost={MAPPINGS[boost_key]} error={error_message}"
+
+  except (json.JSONDecodeError, ValueError):
+    return False, f"failed to boost {player_label} userPassId={player_id} statBoostKey={boost_key} - invalid JSON response: {response.text}"
+
 
 
 def main() -> None:
