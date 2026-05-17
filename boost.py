@@ -13,7 +13,6 @@ load_dotenv()
 AUTH_INFO = os.getenv("RAINCANE")
 SPORT = "wnba"
 PLAYER_FILE = Path("players") / f"RAINCANE_{SPORT}.json"
-OUTPUT_DIR = Path("boosts")
 API_BASE_URL = "https://api.real.vg"
 BOOST_KEYS = [1, 2, 3, 4, 5, 21]
 BOOST_RARITY = 3
@@ -101,10 +100,10 @@ def boost_player(player: dict[str, object], auth_info: str) -> tuple[bool, str]:
       return True, f"boosted {player_label} userPassId={player_id} boost={MAPPINGS[boost_key]}"
     else:
       error_message = response_data.get("message", "unknown error")
-      return False, f"failed to boost {player_label} userPassId={player_id} boost={MAPPINGS[boost_key]} error={error_message}"
+      return False, f"failed to boost {player_label} userPassId={player_id} error={error_message}"
 
   except (json.JSONDecodeError, ValueError):
-    return False, f"failed to boost {player_label} userPassId={player_id} statBoostKey={boost_key} - invalid JSON response: {response.text}"
+    return False, f"failed to boost {player_label} userPassId={player_id} - invalid JSON response: {response.text}"
 
 
 
@@ -123,14 +122,14 @@ def main() -> None:
     print(f"Missing players file: {PLAYER_FILE}")
     return
 
-  OUTPUT_DIR.mkdir(exist_ok=True)
-
   players = load_players(PLAYER_FILE)
   print(f"Loaded {len(players)} players from {PLAYER_FILE}")
 
   results = []
   for player in players:
-    if player.get("sport") != SPORT:
+    if player.get("boosterCardId"):
+      boost_type = MAPPINGS[int(player["boosterCardInfo"]["statBoostKey"])]
+      print(f"skipping {player.get('label', 'unknown player')} userPassId={player.get('id')} - already has booster={boost_type}")
       continue
 
     success, message = boost_player(player, AUTH_INFO)
@@ -144,11 +143,6 @@ def main() -> None:
       }
     )
 
-  output_path = OUTPUT_DIR / f"RAINCANE_{SPORT}_boosts.json"
-  with open(output_path, "w", encoding="utf-8") as file:
-    json.dump(results, file, indent=2, ensure_ascii=False)
-
-  print(f"Saved boost results to {output_path}")
 
 
 if __name__ == "__main__":
